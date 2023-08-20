@@ -1,0 +1,18 @@
+name: torch_sp_rsvd_cpu_env
+channels:
+  - pyg
+  - numba
+  - pytorch
+  - conda-forge
+dependencies:
+  - python=3.10
+  - cpuonly
+  - pip
+  - icc_rt
+  - numba
+  - numpy
+  - pytorch=2.0.1
+  - pytorch-sparse=0.6
+  - scipy
+  - joblib
+  - tqdm
