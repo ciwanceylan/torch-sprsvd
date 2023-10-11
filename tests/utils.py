@@ -6,7 +6,7 @@ def synthetic_singular_values(type_: int, p: int, dtype: torch.dtype = torch.flo
     if type_ == 1:
         sigma1 = torch.pow(torch.tensor([10.]), -(4 / 19) * torch.arange(0, 20))
         sigma2 = (torch.tensor([1e-4]) / (torch.pow(torch.arange(1, p - 20 + 1), 0.1)))
-        sigma = torch.concatenate((sigma1, sigma2))
+        sigma = torch.cat((sigma1, sigma2))
     elif type_ == 2:
         sigma = 1. / (torch.arange(1, p + 1) ** 2)
     elif type_ == 3:
@@ -16,14 +16,14 @@ def synthetic_singular_values(type_: int, p: int, dtype: torch.dtype = torch.flo
     elif type_ == 5:
         sigma = torch.pow(torch.tensor([10.]), -0.1 ** torch.arange(1, p + 1))
     elif type_ == 6:
-        sigma1 = torch.concatenate([
+        sigma1 = torch.cat([
             torch.full(size=(3,), fill_value=1., dtype=dtype),
             torch.full(size=(3,), fill_value=0.67, dtype=dtype),
             torch.full(size=(3,), fill_value=0.34, dtype=dtype),
             torch.full(size=(3,), fill_value=0.01, dtype=dtype)
         ])
         sigma2 = torch.tensor([1e-2]) * torch.arange(p - 13, -1, -1) / (p - 13)
-        sigma = torch.concatenate((sigma1, sigma2))
+        sigma = torch.cat((sigma1, sigma2))
     else:
         raise ValueError(f"Unknown text matrix type '{type_}'")
     sigma = sigma.to(dtype=dtype)
