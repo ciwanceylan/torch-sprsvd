@@ -73,7 +73,7 @@ setup(
     ],
     python_requires='>=3.7',
     install_requires=[
-        'numpy>=1.15', 'scipy>=1.0.0', 'numba>=0.50.1', 'torch>=2.1.1', 'torch-sparse>=0.6.17',
+        'numpy>=1.15', 'scipy>=1.0.0', 'torch>=2.0.1', 'torch-sparse>=0.6.17',
     ],
     extras_require={
         # 'numba': ['numba>=0.50.1']
