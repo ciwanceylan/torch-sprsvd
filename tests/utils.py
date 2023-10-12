@@ -14,7 +14,7 @@ def synthetic_singular_values(type_: int, p: int, dtype: torch.dtype = torch.flo
     elif type_ == 4:
         sigma = torch.exp(-torch.arange(1, p + 1) / 7.).to(dtype=dtype)
     elif type_ == 5:
-        sigma = torch.pow(torch.tensor([10.]), -0.1 ** torch.arange(1, p + 1))
+        sigma = torch.pow(torch.tensor([10.]), -0.1 ** torch.arange(p + 1, 1, -1))
     elif type_ == 6:
         sigma1 = torch.cat([
             torch.full(size=(3,), fill_value=1., dtype=dtype),
@@ -31,11 +31,13 @@ def synthetic_singular_values(type_: int, p: int, dtype: torch.dtype = torch.flo
 
 
 def generate_synthetic_matrix(num_rows: int, num_cols: int, type_: int, dtype: torch.dtype = torch.float):
+    p = min(num_rows, num_cols)
+    assert p > 20
     L = torch.randn(num_rows, num_rows, dtype=dtype)
     U, _ = torch.linalg.qr(L)
     L = torch.randn(num_cols, num_cols, dtype=dtype)
     V, _ = torch.linalg.qr(L)
-    p = min(num_rows, num_cols)
+
     sigma = synthetic_singular_values(type_=type_, p=p, dtype=dtype)
     sigma = torch.sparse.spdiags(sigma, offsets=torch.tensor([0]), shape=(num_rows, num_cols))
     matrix = U @ sigma @ V
