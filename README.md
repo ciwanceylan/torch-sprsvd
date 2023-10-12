@@ -1,7 +1,7 @@
 # Single-pass rSVD in PyTorch
 
 This is a PyTorch implementation of the single-pass rSVD algorithm in this work [https://doi.org/10.24963/ijcai.2017/468](https://doi.org/10.24963/ijcai.2017/468).
-The original MatLab and C implementation by the paper authers can be found here: [https://github.com/THU-numbda/rSVD-single-pass](https://github.com/THU-numbda/rSVD-single-pass).
+The original MatLab and C implementation by the paper authors can be found here: [https://github.com/THU-numbda/rSVD-single-pass](https://github.com/THU-numbda/rSVD-single-pass).
 
 
 ## Install instructions
