@@ -14,7 +14,7 @@ def synthetic_singular_values(type_: int, p: int, dtype: torch.dtype = torch.flo
     elif type_ == 4:
         sigma = torch.exp(-torch.arange(1, p + 1) / 7.).to(dtype=dtype)
     elif type_ == 5:
-        sigma = torch.pow(torch.tensor([10.]), -0.1 ** torch.arange(p + 1, 1, -1))
+        sigma = torch.pow(torch.tensor([10.]), -0.1 * torch.arange(1, p + 1, 1))
     elif type_ == 6:
         sigma1 = torch.cat([
             torch.full(size=(3,), fill_value=1., dtype=dtype),
