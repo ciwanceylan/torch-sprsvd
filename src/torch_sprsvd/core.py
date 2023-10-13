@@ -66,11 +66,11 @@ def rsvd_basic(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, n
         sample_mat, _ = torch.linalg.qr(input_matrix @ omega, mode='reduced')  # [m, k + p]
 
     omega = input_matrix.t() @ sample_mat  # [n, k + p]
-    U1, singular_values, V = torch.linalg.svd(omega.t())  # [k + p, k + p], [k + p, k + p], [n, k + p]
+    U1, singular_values, Vh = torch.linalg.svd(omega.t())  # [k + p, k + p], [k + p, k + p], [k + p, n]
     U = sample_mat @ U1[:, :k]  # [m, k]
     singular_values = singular_values[:k]  # [k]
-    V = V[:, :k]  # [n, k]
-    return U, singular_values, V
+    Vh = Vh[:k, :]  # [n, k]
+    return U, singular_values, Vh
 
 
 HALKO_RSVD_MODES = Literal['col_projection', 'row_projection', 'combined']
@@ -111,12 +111,12 @@ def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
             omega_rows.t() @ sample_mat_orth_cols,
             sample_mat_rows.t() @ sample_mat_orth_rows
         ).solution  # [k+p, k+p]
-        U1, singular_values, V1 = torch.linalg.svd(input_approx)  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
+        U1, singular_values, V1h = torch.linalg.svd(input_approx)  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
 
         U = sample_mat_orth_cols @ U1  # [m, k + p]
         U = U[:, :k]  # [m, k]
-        V = sample_mat_orth_rows @ V1  # [n, k + p]
-        V = V[:, :k]  # [n, k]
+        Vh = V1h @ sample_mat_orth_rows.t()  # [n, k + p]
+        Vh = Vh[:k, :]  # [n, k]
         singular_values = singular_values[:k]  # [k]
 
     elif mode == 'col_projection':
@@ -125,12 +125,13 @@ def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
             omega_cols.t() @ sample_mat_orth_rows,
             sample_mat_cols.t() @ sample_mat_orth_cols
         ).solution  # [k+p, k+p]
-        V1, singular_values, U1 = torch.linalg.svd(input_approx_t)  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
+        U1, singular_values, V1h = torch.linalg.svd(
+            input_approx_t.t())  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
 
         U = sample_mat_orth_cols @ U1  # [m, k + p]
         U = U[:, :k]  # [m, k]
-        V = sample_mat_orth_rows @ V1  # [n, k + p]
-        V = V[:, :k]  # [n, k]
+        Vh = V1h @ sample_mat_orth_rows.t()  # [k + p, n]
+        Vh = Vh[:k, :]  # [n, k]
         singular_values = singular_values[:k]  # [k]
 
     elif mode == 'combined':
@@ -141,17 +142,17 @@ def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
             C=omega_rows.t() @ sample_mat_orth_cols,
             D=sample_mat_rows.t() @ sample_mat_orth_rows,
         )
-        U1, singular_values, V1 = torch.linalg.svd(input_approx)  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
+        U1, singular_values, V1h = torch.linalg.svd(input_approx)  # [k + p, k + p], [k + p, k + p], [k + p, k + p]
 
         U = sample_mat_orth_cols @ U1  # [m, k + p]
         U = U[:, :k]  # [m, k]
-        V = sample_mat_orth_rows @ V1  # [n, k + p]
-        V = V[:, :k]  # [n, k]
+        Vh = V1h @ sample_mat_orth_rows.t()  # [k + p, n]
+        Vh = Vh[:k, :]  # [n, k]
         singular_values = singular_values[:k]  # [k]
     else:
         raise ValueError(f"Unknown Halko single-pass rSVD mode {mode}.")
 
-    return U, singular_values, V
+    return U, singular_values, Vh
 
 
 def _ensure_compatible_batch_size_and_oversampling(k: int, num_oversampling: int, batch_size: int):
@@ -206,11 +207,11 @@ def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
         Q = torch.cat((Q, Qi), dim=1)  # [m, (i+1) * b]
         B = torch.cat((B, Bi), dim=0)  # [(i+1) * b, n]
 
-    U1, singular_values, V = torch.linalg.svd(B)  # [k + p, k + p], [k + p, k + p], [n, k + p]
+    U1, singular_values, Vh = torch.linalg.svd(B)  # [k + p, k + p], [k + p, k + p], [k + p, n]
 
     U = Q @ U1  # [m, k + p]
     U = U[:, :k]  # [m, k]
-    V = V[:, :k]  # [n, k]
+    Vh = Vh[:k, :]  # [n, k]
     singular_values = singular_values[:k]  # [k]
 
-    return U, singular_values, V
+    return U, singular_values, Vh
