@@ -188,6 +188,40 @@ def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
 
     G = input_matrix @ omega_cols
     H = input_matrix.t() @ G
+
+    return gh_sp_rsvd_block(omega_cols=omega_cols, G=G, H=H, k=k, block_size=block_size)
+    # Q = torch.zeros((num_rows, 0), dtype=G.dtype, device=G.device)
+    # B = torch.zeros((0, num_cols), dtype=G.dtype, device=G.device)
+    #
+    # num_blocks = k // block_size
+    # assert k == num_blocks * block_size  # Sanity check
+    #
+    # for i in range(num_blocks):
+    #     temp = B @ omega_cols[:, i * block_size:(i + 1) * block_size]
+    #     Yi = G[:, i * block_size:(i + 1) * block_size] - Q @ temp
+    #     Qi, Ri = torch.linalg.qr(Yi, mode='reduced')
+    #     Qi, Rit = torch.linalg.qr(Qi - Q @ (Q.t() @ Qi), mode='reduced')
+    #     Ri = Rit @ Ri
+    #     Bi = torch.linalg.lstsq(
+    #         Ri.t(),
+    #         H[:, i * block_size:(i + 1) * block_size].t() - Yi.t() @ Q @ B - temp.t() @ B
+    #     ).solution
+    #     Q = torch.cat((Q, Qi), dim=1)  # [m, (i+1) * b]
+    #     B = torch.cat((B, Bi), dim=0)  # [(i+1) * b, n]
+    #
+    # U1, singular_values, Vh = torch.linalg.svd(B)  # [k + p, k + p], [k + p, k + p], [k + p, n]
+    #
+    # U = Q @ U1  # [m, k + p]
+    # U = U[:, :k]  # [m, k]
+    # Vh = Vh[:k, :]  # [n, k]
+    # singular_values = singular_values[:k]  # [k]
+    #
+    # return U, singular_values, Vh
+
+
+def gh_sp_rsvd_block(omega_cols: torch.Tensor, G: torch.Tensor, H: torch.Tensor, k: int, block_size: int):
+    num_rows = G.shape[0]
+    num_cols = omega_cols.shape[0]
     Q = torch.zeros((num_rows, 0), dtype=G.dtype, device=G.device)
     B = torch.zeros((0, num_cols), dtype=G.dtype, device=G.device)
 
