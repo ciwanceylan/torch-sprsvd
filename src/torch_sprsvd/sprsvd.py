@@ -34,6 +34,10 @@ class StreamSPBlockRSVD:
         self._G = torch.cat(self._g_tensors, dim=0)
         return self._G
 
+    def set_G_and_H(self, G: torch.Tensor, H: torch.Tensor):
+        self._G = G
+        self._H = H
+
     def compute_block_rsvd(self):
         if self._G is None:
             self.merge_g()
