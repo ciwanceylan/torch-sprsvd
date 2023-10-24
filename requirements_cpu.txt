@@ -4,8 +4,8 @@ numba>=0.50.1
 tqdm
 pandas
 -f https://download.pytorch.org/whl/cpu
-torch==2.0.1
--f https://data.pyg.org/whl/torch-2.0.1+cpu.html
+torch==2.1.0
+-f https://data.pyg.org/whl/torch-2.1.0+cpu.html
 torch-scatter>=2.1
-torch-sparse>=0.6.17
+torch-sparse>=0.6.18
 joblib
