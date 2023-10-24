@@ -6,6 +6,14 @@ from torch import nn as nn, optim as optim
 
 TORCH_MATRIX = Union[torch.Tensor, tsp.SparseTensor]
 
+def get_dtype(tensor: TORCH_MATRIX):
+    return tensor.dtype() if isinstance(tensor, tsp.SparseTensor) else tensor.dtype
+
+def get_device(tensor: TORCH_MATRIX):
+    return tensor.device() if isinstance(tensor, tsp.SparseTensor) else tensor.device
+
+def get_shape(tensor: TORCH_MATRIX):
+    return tensor.sizes() if isinstance(tensor, tsp.SparseTensor) else tensor.shape
 
 def _minimize_semi_linear_form(A: torch.Tensor, B: torch.Tensor, C: torch.Tensor, D: torch.Tensor,
                                num_iter: int = 10):
@@ -53,10 +61,10 @@ def rsvd_basic(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, n
     Returns: U, singular_values, V
 
     """
-    dtype = input_matrix.dtype() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.dtype
-    device = input_matrix.device() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.device
+    dtype = get_dtype(input_matrix)
+    device = get_device(input_matrix)
+    num_rows, num_cols = get_shape(input_matrix)  # [m, n]
 
-    num_rows, num_cols = input_matrix.shape  # [m, n]
     omega = torch.randn(num_cols, k + num_oversampling, dtype=dtype, device=device)  # [n, k + p]
     sample_mat = input_matrix @ omega  # [m, k + p]
     sample_mat, _ = torch.linalg.qr(sample_mat, mode='reduced')  # [m, k + p]
@@ -92,10 +100,10 @@ def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
     Returns: U, singular_values, V
 
     """
-    dtype = input_matrix.dtype() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.dtype
-    device = input_matrix.device() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.device
+    dtype = get_dtype(input_matrix)
+    device = get_device(input_matrix)
+    num_rows, num_cols = get_shape(input_matrix)  # [m, n]
 
-    num_rows, num_cols = input_matrix.shape  # [m, n]
     omega_cols = torch.randn(num_cols, k + num_oversampling, dtype=dtype, device=device)  # [n, k + p]
     omega_rows = torch.randn(num_rows, k + num_oversampling, dtype=dtype, device=device)  # [m, k + p]
 
@@ -174,14 +182,13 @@ def _ensure_compatible_batch_size_and_oversampling(k: int, num_oversampling: int
 
 
 def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, block_size: int = 10):
-    dtype = input_matrix.dtype() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.dtype
-    device = input_matrix.device() if isinstance(input_matrix, tsp.SparseTensor) else input_matrix.device
+    dtype = get_dtype(input_matrix)
+    device = get_device(input_matrix)
+    num_rows, num_cols = get_shape(input_matrix)  # [m, n]
 
     num_oversampling = _ensure_compatible_batch_size_and_oversampling(k=k,
                                                                       num_oversampling=num_oversampling,
                                                                       batch_size=block_size)
-
-    num_rows, num_cols = input_matrix.shape  # [m, n]
     num_oversampling = min(num_cols - k, num_oversampling)
 
     omega_cols = torch.randn(num_cols, k + num_oversampling, dtype=dtype, device=device)  # [n, k + p]
