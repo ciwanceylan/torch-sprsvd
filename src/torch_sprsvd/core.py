@@ -6,14 +6,18 @@ from torch import nn as nn, optim as optim
 
 TORCH_MATRIX = Union[torch.Tensor, tsp.SparseTensor]
 
+
 def get_dtype(tensor: TORCH_MATRIX):
     return tensor.dtype() if isinstance(tensor, tsp.SparseTensor) else tensor.dtype
+
 
 def get_device(tensor: TORCH_MATRIX):
     return tensor.device() if isinstance(tensor, tsp.SparseTensor) else tensor.device
 
+
 def get_shape(tensor: TORCH_MATRIX):
     return tensor.sizes() if isinstance(tensor, tsp.SparseTensor) else tensor.shape
+
 
 def _minimize_semi_linear_form(A: torch.Tensor, B: torch.Tensor, C: torch.Tensor, D: torch.Tensor,
                                num_iter: int = 10):
@@ -197,33 +201,6 @@ def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
     H = input_matrix.t() @ G
 
     return gh_sp_rsvd_block(omega_cols=omega_cols, G=G, H=H, k=k, block_size=block_size)
-    # Q = torch.zeros((num_rows, 0), dtype=G.dtype, device=G.device)
-    # B = torch.zeros((0, num_cols), dtype=G.dtype, device=G.device)
-    #
-    # num_blocks = k // block_size
-    # assert k == num_blocks * block_size  # Sanity check
-    #
-    # for i in range(num_blocks):
-    #     temp = B @ omega_cols[:, i * block_size:(i + 1) * block_size]
-    #     Yi = G[:, i * block_size:(i + 1) * block_size] - Q @ temp
-    #     Qi, Ri = torch.linalg.qr(Yi, mode='reduced')
-    #     Qi, Rit = torch.linalg.qr(Qi - Q @ (Q.t() @ Qi), mode='reduced')
-    #     Ri = Rit @ Ri
-    #     Bi = torch.linalg.lstsq(
-    #         Ri.t(),
-    #         H[:, i * block_size:(i + 1) * block_size].t() - Yi.t() @ Q @ B - temp.t() @ B
-    #     ).solution
-    #     Q = torch.cat((Q, Qi), dim=1)  # [m, (i+1) * b]
-    #     B = torch.cat((B, Bi), dim=0)  # [(i+1) * b, n]
-    #
-    # U1, singular_values, Vh = torch.linalg.svd(B)  # [k + p, k + p], [k + p, k + p], [k + p, n]
-    #
-    # U = Q @ U1  # [m, k + p]
-    # U = U[:, :k]  # [m, k]
-    # Vh = Vh[:k, :]  # [n, k]
-    # singular_values = singular_values[:k]  # [k]
-    #
-    # return U, singular_values, Vh
 
 
 def gh_sp_rsvd_block(omega_cols: torch.Tensor, G: torch.Tensor, H: torch.Tensor, k: int, block_size: int):
@@ -241,9 +218,13 @@ def gh_sp_rsvd_block(omega_cols: torch.Tensor, G: torch.Tensor, H: torch.Tensor,
         Qi, Ri = torch.linalg.qr(Yi, mode='reduced')
         Qi, Rit = torch.linalg.qr(Qi - Q @ (Q.t() @ Qi), mode='reduced')
         Ri = Rit @ Ri
+
+        # Using driver 'gels' in lstsq below to avoid inconsistency issues with default cpu driver 'gelsy'.
+        # See this issue [https://github.com/pytorch/pytorch/issues/92537]
         Bi = torch.linalg.lstsq(
             Ri.t(),
-            H[:, i * block_size:(i + 1) * block_size].t() - Yi.t() @ Q @ B - temp.t() @ B
+            H[:, i * block_size:(i + 1) * block_size].t() - Yi.t() @ Q @ B - temp.t() @ B,
+            driver='gels'
         ).solution
         Q = torch.cat((Q, Qi), dim=1)  # [m, (i+1) * b]
         B = torch.cat((B, Bi), dim=0)  # [(i+1) * b, n]
