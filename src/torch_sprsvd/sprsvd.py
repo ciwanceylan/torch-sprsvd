@@ -54,4 +54,6 @@ def single_pass_rsvd(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int =
 
 
 def single_pass_block_rsvd(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, block_size: int = 10):
+    if block_size > k:
+        raise ValueError(f"Block rsvd requires 'block_size' <= k ")
     return core.sp_rsvd_block(input_matrix=input_matrix, k=k, num_oversampling=num_oversampling, block_size=block_size)
