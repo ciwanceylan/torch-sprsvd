@@ -6,8 +6,8 @@ from torch_sprsvd.core import TORCH_MATRIX, HALKO_RSVD_MODES
 
 class StreamSPBlockRSVD:
     _g_tensors: List[torch.Tensor]
-    _G: Optional[torch.Tensor]
-    _H: torch.Tensor
+    G_: Optional[torch.Tensor]
+    H_: torch.Tensor
 
     def __init__(self, omega: torch.Tensor, k: int, block_size: int = 10):
         super().__init__()
@@ -18,8 +18,8 @@ class StreamSPBlockRSVD:
         self.k = k
         self.block_size = block_size
         self._g_tensors = []
-        self._G = None
-        self._H = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
+        self.G_ = None
+        self.H_ = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
 
     @classmethod
     def create(cls, num_cols: int, k: int, num_oversampling: int = 10, block_size: int = 10,
@@ -31,20 +31,21 @@ class StreamSPBlockRSVD:
     def update(self, tensor_batch: TORCH_MATRIX):
         G = tensor_batch @ self.omega  # [ batch_size x (k+p) ]
         self._g_tensors.append(G)
-        self._H = self._H + tensor_batch.t() @ G  # [ num_cols x (k+p) ]
+        # TODO Perhaps Kahn summation can be used here to reduce nummerical inaccuracties
+        self.H_ = self.H_ + (tensor_batch.t() @ G)  # [ num_cols x (k+p) ]
 
     def merge_g(self):
-        self._G = torch.cat(self._g_tensors, dim=0)
-        return self._G
+        self.G_ = torch.cat(self._g_tensors, dim=0)
+        return self.G_
 
     def set_G_and_H(self, G: torch.Tensor, H: torch.Tensor):
-        self._G = G
-        self._H = H
+        self.G_ = G
+        self.H_ = H
 
     def compute_block_rsvd(self):
-        if self._G is None:
+        if self.G_ is None:
             self.merge_g()
-        return core.gh_sp_rsvd_block(omega_cols=self.omega, G=self._G, H=self._H, k=self.k, block_size=self.block_size)
+        return core.gh_sp_rsvd_block(omega_cols=self.omega, G=self.G_, H=self.H_, k=self.k, block_size=self.block_size)
 
 
 def multi_pass_rsvd(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, num_iter: int = 0):
