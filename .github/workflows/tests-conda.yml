@@ -20,7 +20,7 @@ jobs:
       - name: Set up Miniconda with on ${{ matrix.ubuntu-latest }}
         uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: reachnes_env
+          activate-environment: torch_sp_rsvd_cpu_env
           environment-file: cpu_environment.yml
           auto-activate-base: false
       - name: Install test dependencies
