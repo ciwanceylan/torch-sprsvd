@@ -11,12 +11,15 @@ class StreamSPBlockRSVD:
 
     def __init__(self, omega: torch.Tensor, k: int, block_size: int = 10):
         super().__init__()
+        if block_size > k or (k // block_size) != (k / block_size):
+            raise ValueError(f"'k' and 'block_size' must be compatible, "
+                             f"meaning that 'k' must be a multiple of 'block_size'.")
         self.omega = omega
         self.k = k
         self.block_size = block_size
         self._g_tensors = []
         self._G = None
-        self._H = torch.zeros((omega.shape[1], omega.shape[1]), dtype=omega.dtype, device=omega.device)
+        self._H = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
 
     @classmethod
     def create(cls, num_cols: int, k: int, num_oversampling: int = 10, block_size: int = 10,
@@ -26,9 +29,9 @@ class StreamSPBlockRSVD:
         return cls(omega=omega, k=k, block_size=block_size)
 
     def update(self, tensor_batch: TORCH_MATRIX):
-        G = tensor_batch @ self.omega  # [ num_rows x (k+p) ]
+        G = tensor_batch @ self.omega  # [ batch_size x (k+p) ]
         self._g_tensors.append(G)
-        self._H = self._H + tensor_batch.t() @ G  # [ (k+p) x (k+p) ]
+        self._H = self._H + tensor_batch.t() @ G  # [ num_cols x (k+p) ]
 
     def merge_g(self):
         self._G = torch.cat(self._g_tensors, dim=0)
