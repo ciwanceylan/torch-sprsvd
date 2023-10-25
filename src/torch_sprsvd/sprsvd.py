@@ -20,6 +20,7 @@ class StreamSPBlockRSVD:
         self._g_tensors = []
         self.G_ = None
         self.H_ = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
+        self._H_kahn_correction = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
 
     @classmethod
     def create(cls, num_cols: int, k: int, num_oversampling: int = 10, block_size: int = 10,
@@ -31,7 +32,6 @@ class StreamSPBlockRSVD:
     def update(self, tensor_batch: TORCH_MATRIX):
         G = tensor_batch @ self.omega  # [ batch_size x (k+p) ]
         self._g_tensors.append(G)
-        # TODO Perhaps Kahn summation can be used here to reduce nummerical inaccuracties
         self.H_ = self.H_ + (tensor_batch.t() @ G)  # [ num_cols x (k+p) ]
 
     def merge_g(self):
