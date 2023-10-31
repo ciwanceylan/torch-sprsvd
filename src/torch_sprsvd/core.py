@@ -203,6 +203,12 @@ def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
     return gh_sp_rsvd_block(omega_cols=omega_cols, G=G, H=H, k=k, block_size=block_size)
 
 
+def calc_gh_batch(tensor_batch: TORCH_MATRIX, omega: torch.Tensor):
+    G = tensor_batch @ omega  # [ batch_size x (k+p) ]
+    H = tensor_batch.t() @ G
+    return G, H
+
+
 def gh_sp_rsvd_block(omega_cols: torch.Tensor, G: torch.Tensor, H: torch.Tensor, k: int, block_size: int):
     num_rows = G.shape[0]
     num_cols = omega_cols.shape[0]

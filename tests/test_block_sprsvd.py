@@ -90,8 +90,8 @@ def test_stream_block_rsvd(type_: int, k: int, dtype: torch.dtype, mat_type: str
             rsvd_obj.update(input_matrix[batch_indices, :])
 
         rsvd_obj.merge_g()
-        assert torch.allclose(H, rsvd_obj.H_, rtol=1e-05, atol=1e-07)
-        assert torch.allclose(G, rsvd_obj.G_)
+        torch.testing.assert_close(rsvd_obj.H_, H, rtol=1e-05, atol=1e-07)
+        torch.testing.assert_close(rsvd_obj.G_, G)
 
         _ = rsvd_obj.compute_block_rsvd()
 

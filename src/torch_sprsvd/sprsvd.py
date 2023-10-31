@@ -30,9 +30,9 @@ class StreamSPBlockRSVD:
         return cls(omega=omega, k=k, block_size=block_size)
 
     def update(self, tensor_batch: TORCH_MATRIX):
-        G = tensor_batch @ self.omega  # [ batch_size x (k+p) ]
-        self._g_tensors.append(G)
-        self.H_ = self.H_ + (tensor_batch.t() @ G)  # [ num_cols x (k+p) ]
+        G_, H_ = core.calc_gh_batch(tensor_batch, omega=self.omega)
+        self._g_tensors.append(G_)
+        self.H_ = self.H_ + H_  # [ num_cols x (k+p) ]
 
     def merge_g(self):
         self.G_ = torch.cat(self._g_tensors, dim=0)
