@@ -167,22 +167,35 @@ def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
     return U, singular_values, Vh
 
 
-def _ensure_compatible_batch_size_and_oversampling(k: int, num_oversampling: int, batch_size: int):
-    """
-    k+num_oversampling must be a multiple of batch_size.
-    Args:
-        k:
-        num_oversampling:
-        batch_size:
+# def _ensure_compatible_batch_size_and_oversampling(k: int, num_oversampling: int, batch_size: int):
+#     """
+#     k+num_oversampling must be a multiple of batch_size.
+#     Args:
+#         k:
+#         num_oversampling:
+#         batch_size:
+#
+#     Returns:
+#
+#     """
+#     multiple = (k + num_oversampling) // batch_size
+#     num_oversampling = (multiple + 1) * batch_size - k
+#     # print(f"Adjusted oversampling to {num_oversampling} to comply with batch_size {batch_size}")
+#
+#     return num_oversampling
 
-    Returns:
 
-    """
-    multiple = (k + num_oversampling) // batch_size
-    num_oversampling = (multiple + 1) * batch_size - k
-    # print(f"Adjusted oversampling to {num_oversampling} to comply with batch_size {batch_size}")
-
-    return num_oversampling
+def fix_num_oversampling_and_block_size(k: int, num_oversampling: int, block_size: int, num_cols: int):
+    num_oversampling = min(num_cols - k, num_oversampling)
+    block_size_residual = ((k + num_oversampling) % block_size)
+    if block_size_residual > 0 and (k + num_oversampling) == num_cols:
+        # In this the oversampling should not be changed.
+        block_size = 1
+    elif block_size_residual > 0:
+        # Try to increase the num_oversampling to match the block size
+        num_oversampling = num_oversampling + block_size - block_size_residual
+        num_oversampling, block_size = fix_num_oversampling_and_block_size(k, num_oversampling, block_size, num_cols)
+    return num_oversampling, block_size
 
 
 def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10, block_size: int = 10):
@@ -190,10 +203,12 @@ def sp_rsvd_block(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10
     device = get_device(input_matrix)
     num_rows, num_cols = get_shape(input_matrix)  # [m, n]
 
-    num_oversampling = _ensure_compatible_batch_size_and_oversampling(k=k,
-                                                                      num_oversampling=num_oversampling,
-                                                                      batch_size=block_size)
-    num_oversampling = min(num_cols - k, num_oversampling)
+    num_oversampling, block_size = fix_num_oversampling_and_block_size(k, num_oversampling, block_size, num_cols)
+
+    # num_oversampling = _ensure_compatible_batch_size_and_oversampling(k=k,
+    #                                                                   num_oversampling=num_oversampling,
+    #                                                                   batch_size=block_size)
+    # num_oversampling = min(num_cols - k, num_oversampling)
 
     omega_cols = torch.randn(num_cols, k + num_oversampling, dtype=dtype, device=device)  # [n, k + p]
 
@@ -212,11 +227,12 @@ def calc_gh_batch(tensor_batch: TORCH_MATRIX, omega: torch.Tensor):
 def gh_sp_rsvd_block(omega_cols: torch.Tensor, G: torch.Tensor, H: torch.Tensor, k: int, block_size: int):
     num_rows = G.shape[0]
     num_cols = omega_cols.shape[0]
+    l = omega_cols.shape[1]
     Q = torch.zeros((num_rows, 0), dtype=G.dtype, device=G.device)
     B = torch.zeros((0, num_cols), dtype=G.dtype, device=G.device)
 
-    num_blocks = k // block_size
-    assert k == num_blocks * block_size  # Sanity check
+    num_blocks = l // block_size
+    assert l == num_blocks * block_size  # Sanity check
 
     for i in range(num_blocks):
         temp = B @ omega_cols[:, i * block_size:(i + 1) * block_size]

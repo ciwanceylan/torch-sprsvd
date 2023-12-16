@@ -24,17 +24,17 @@ def test_block_rsvd(type_: int, k: int, dtype: torch.dtype, mat_type: str):
         over_sampling_recon_errors = []
         for i, num_oversampling in enumerate([0, 5, 10, 20]):
 
-            if k < block_size:
+            if (k + num_oversampling) < block_size:
                 with pytest.raises(ValueError):
                     _ = tsprsvd.single_pass_block_rsvd(input_matrix=input_matrix, k=k,
                                                        num_oversampling=num_oversampling,
                                                        block_size=block_size)
 
-            elif k // block_size != k / block_size:
-                with pytest.raises(AssertionError):
-                    _ = tsprsvd.single_pass_block_rsvd(input_matrix=input_matrix, k=k,
-                                                       num_oversampling=num_oversampling,
-                                                       block_size=block_size)
+            # elif ((k + num_oversampling) // block_size) != ((k + num_oversampling) / block_size):
+            #     with pytest.raises(AssertionError):
+            #         _ = tsprsvd.single_pass_block_rsvd(input_matrix=input_matrix, k=k,
+            #                                            num_oversampling=num_oversampling,
+            #                                            block_size=block_size)
             else:
                 U, sig_values, Vh = tsprsvd.single_pass_block_rsvd(input_matrix=input_matrix, k=k,
                                                                    num_oversampling=num_oversampling,
