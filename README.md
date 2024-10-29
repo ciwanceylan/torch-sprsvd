@@ -1,5 +1,8 @@
 # Single-pass rSVD in PyTorch
 
+[![tests](https://github.com/ciwanceylan/torch-sprsvd/actions/workflows/tests-pip.yml/badge.svg)](https://github.com/ciwanceylan/torch-sprsvd/actions/workflows/tests-pip.yml)
+[![codecov](https://codecov.io/gh/ciwanceylan/torch-sprsvd/graph/badge.svg?token=0Y2KB6ZA4U)](https://codecov.io/gh/ciwanceylan/torch-sprsvd)
+
 Sometimes it is necessary to compute the singular value decomposition (SVD) in a single pass through the data, for example, when the data is streamed and too large to store in memory.
 For this, single-pass randomized SVD (sp-rSVD) is incredibly useful! 
 The sp-rSVD algorithm overcomes memory limitations by projecting the incoming data into a lower dimensional space, which perseveres the subspaces with the largest singular values.
