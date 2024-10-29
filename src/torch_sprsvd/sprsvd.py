@@ -11,16 +11,18 @@ class StreamSPBlockRSVD:
 
     def __init__(self, omega: torch.Tensor, k: int, block_size: int = 10):
         super().__init__()
-        if block_size > k or (k // block_size) != (k / block_size):
-            raise ValueError(f"'k' and 'block_size' must be compatible, "
-                             f"meaning that 'k' must be a multiple of 'block_size'.")
+        l = omega.shape[1]
+        if block_size > l or (l // block_size) != (l / block_size):
+            raise ValueError(f"'k + num_oversampling' and 'block_size' must be compatible, "
+                             f"meaning that 'k + num_oversampling' must be a multiple of 'block_size'."
+                             f"Currently k + num_oversampling = {l} and block_size = {block_size}.")
         self.omega = omega
         self.k = k
         self.block_size = block_size
         self._g_tensors = []
         self.G_ = None
         self.H_ = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
-        self._H_kahn_correction = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
+        # self._H_kahn_correction = torch.zeros((omega.shape[0], omega.shape[1]), dtype=omega.dtype, device=omega.device)
 
     @classmethod
     def create(cls, num_cols: int, k: int, num_oversampling: int = 10, block_size: int = 10,
