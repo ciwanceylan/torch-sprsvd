@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ciwanceylan/reachnes"
-Issues = "https://github.com/ciwanceylan/reachnes/issues"
+Homepage = "https://github.com/ciwanceylan/torch-sprsvd"
+Issues = "https://github.com/ciwanceylan/torch-sprsvd/issues"
