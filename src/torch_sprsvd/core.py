@@ -91,7 +91,7 @@ HALKO_RSVD_MODES = Literal['col_projection', 'row_projection', 'combined']
 def sp_rsvd_halko(input_matrix: TORCH_MATRIX, k: int, num_oversampling: int = 10,
                   mode: HALKO_RSVD_MODES = 'col_projection'):
     """
-    Algorithm 2 from 'https://doi.org/10.24963/ijcai.2017/468' adapted from https://arxiv.org/pdf/0909.4061.pdf (algorithm 5).
+    Algorithm 2 from 'https://doi.org/10.24963/ijcai.2017/468' adapted from https://arxiv.org/pdf/0909.4061.pdf (section 5.5).
     Args:
         input_matrix:
         k: number of singular values and vectors
